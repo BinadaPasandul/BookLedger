@@ -116,7 +116,7 @@ function BookList() {
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-slate-800">
-                  Book Catalog
+                  Book Book
                 </h1>
               </div>
               <p className="text-slate-600 text-lg">

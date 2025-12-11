@@ -8,7 +8,7 @@ function EditBook() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Redirect unauthenticated users to login page
+  // Redirect if not logged in
   useEffect(() => {
     if (!localStorage.getItem("token")) {
       alert("Please login to edit books!");
@@ -16,7 +16,7 @@ function EditBook() {
     }
   }, [navigate]);
 
-  // Form state for book details
+  // Form states
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
@@ -24,34 +24,40 @@ function EditBook() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load existing book details when page opens
+  // Load current book data
   useEffect(() => {
     setIsLoading(true);
-    api.get(`/Books/${id}`)
-      .then((response) => {
-        setTitle(response.data.title);
-        setAuthor(response.data.author);
-        setDescription(response.data.description);
-        setCategory(response.data.category);
+    const token = localStorage.getItem("token");
+
+    api.get(`/Books/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }, // 🔥 FIX: include token
+    })
+      .then((res) => {
+        setTitle(res.data.title);
+        setAuthor(res.data.author);
+        setDescription(res.data.description);
+        setCategory(res.data.category);
       })
       .catch(() => alert("Failed to load book details!"))
       .finally(() => {
-        setTimeout(() => setIsLoading(false), 300);
+        setTimeout(() => setIsLoading(false), 400);
       });
   }, [id]);
 
-  // Submit edited book data
+  // Submit edited data
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const updatedBook = { id, title, author, description, category };
+    const token = localStorage.getItem("token");
 
-    api
-      .put(`/Books/${id}`, updatedBook)
+    api.put(`/Books/${id}`, updatedBook, {
+      headers: { Authorization: `Bearer ${token}` }, // 🔥 FIX: include token
+    })
       .then(() => {
         alert("Book updated successfully!");
-        setTimeout(() => navigate("/"), 500);
+        navigate("/books"); // 🔥 FIX: go to catalog
       })
       .catch(() => alert("Failed to update book!"))
       .finally(() => setIsSubmitting(false));
@@ -65,15 +71,13 @@ function EditBook() {
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-lg"
       >
-        {/* Container Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden hover:shadow-3xl transition-shadow duration-300">
-          
+        {/* Card */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+
           {/* Header */}
           <div className="bg-gradient-to-br from-emerald-900 to-teal-900 p-8 text-center relative overflow-hidden">
-            {/* Animated Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400"></div>
-            
-            {/* Icon */}
+
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -82,7 +86,7 @@ function EditBook() {
             >
               <BookOpen className="w-10 h-10 text-white" />
             </motion.div>
-            
+
             <h2 className="text-2xl font-bold text-white mb-1">Edit Book Details</h2>
             <p className="text-emerald-200/80 text-sm">Update your book information</p>
           </div>
@@ -98,144 +102,102 @@ function EditBook() {
               </div>
             ) : (
               <form onSubmit={handleUpdate} className="space-y-5">
-                {/* Back to Catalog Button */}
+
+                {/* Back Button */}
                 <motion.button
                   type="button"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 }}
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/books")}
                   className="mb-4 flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium group transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                   Back to Catalog
                 </motion.button>
 
-                {/* Title Input */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="group"
-                >
+                {/* Title */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     Book Title
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter book title"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 shadow-sm hover:border-emerald-300 transition-all group-hover:shadow-md disabled:bg-slate-50"
-                      disabled={isSubmitting}
-                    />
-                    <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    {/* Hover gradient effect */}
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:via-emerald-500/5 group-hover:to-emerald-500/0 transition-all -z-10"></div>
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl
+                    focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400
+                    shadow-sm"
+                    disabled={isSubmitting}
+                  />
                 </motion.div>
 
-                {/* Author Input */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="group"
-                >
+                {/* Author */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Author
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter author name"
-                      required
-                      value={author}
-                      onChange={(e) => setAuthor(e.target.value)}
-                      className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 shadow-sm hover:border-emerald-300 transition-all group-hover:shadow-md disabled:bg-slate-50"
-                      disabled={isSubmitting}
-                    />
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:via-emerald-500/5 group-hover:to-emerald-500/0 transition-all -z-10"></div>
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl
+                    focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400
+                    shadow-sm"
+                    disabled={isSubmitting}
+                  />
                 </motion.div>
 
-                {/* Description Textarea */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="group"
-                >
+                {/* Description */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     Description
                   </label>
-                  <div className="relative">
-                    <textarea
-                      placeholder="Enter book description"
-                      required
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 shadow-sm hover:border-emerald-300 transition-all group-hover:shadow-md h-32 resize-none disabled:bg-slate-50"
-                      disabled={isSubmitting}
-                    />
-                    <FileText className="absolute left-4 top-4 w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:via-emerald-500/5 group-hover:to-emerald-500/0 transition-all -z-10"></div>
-                  </div>
+                  <textarea
+                    required
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl
+                    focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400
+                    shadow-sm h-32 resize-none"
+                    disabled={isSubmitting}
+                  />
                 </motion.div>
 
-                {/* Category Select */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  className="group"
-                >
+                {/* Category */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <Tag className="w-4 h-4" />
                     Category
                   </label>
-                  <div className="relative">
-                    <select
-                      required
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm hover:border-emerald-300 transition-all group-hover:shadow-md appearance-none disabled:bg-slate-50"
-                      disabled={isSubmitting}
-                    >
-                      <option value="" className="text-slate-400">Select Category</option>
-                      <option value="Fiction" className="text-slate-700">Fiction</option>
-                      <option value="Non-Fiction" className="text-slate-700">Non-Fiction</option>
-                      <option value="Science" className="text-slate-700">Science</option>
-                      <option value="Biography" className="text-slate-700">Biography</option>
-                      <option value="History" className="text-slate-700">History</option>
-                      <option value="Other" className="text-slate-700">Other</option>
-                    </select>
-                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <div className="w-2 h-2 border-r-2 border-b-2 border-slate-400 transform rotate-45"></div>
-                    </div>
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:via-emerald-500/5 group-hover:to-emerald-500/0 transition-all -z-10"></div>
-                  </div>
+                  <select
+                    required
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl
+                    focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Fiction">Fiction</option>
+                    <option value="Non-Fiction">Non-Fiction</option>
+                    <option value="Science">Science</option>
+                    <option value="Biography">Biography</option>
+                    <option value="History">History</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </motion.div>
 
-                {/* Submit Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                {/* Update Button */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 rounded-xl font-semibold overflow-hidden group shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5
+                    rounded-xl font-semibold overflow-hidden group shadow-lg hover:shadow-xl transition-all
+                    duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       {isSubmitting ? (
@@ -250,27 +212,16 @@ function EditBook() {
                         </>
                       )}
                     </span>
-                    {/* Sliding background effect */}
-                    <span className="absolute inset-0 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
-                    {/* Shine effect */}
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
-                    {/* Glow effect */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-500 -z-10"></div>
                   </button>
                 </motion.div>
 
                 {/* Cancel Button */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.35 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <button
                     type="button"
-                    onClick={() => navigate("/")}
-                    className="w-full border border-slate-300 text-slate-700 py-3.5 rounded-xl font-medium hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm hover:shadow-md"
+                    onClick={() => navigate("/books")}
+                    className="w-full border border-slate-300 text-slate-700 py-3.5 rounded-xl font-medium 
+                    hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm hover:shadow-md"
                     disabled={isSubmitting}
                   >
                     Cancel
@@ -281,13 +232,8 @@ function EditBook() {
           </div>
         </div>
 
-        {/* Footer Note */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ delay: 0.4 }}
-          className="text-center text-slate-500 text-sm mt-6"
-        >
+        {/* Footer Text */}
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} className="text-center text-slate-500 text-sm mt-6">
           Make changes and save to update your book record
         </motion.p>
       </motion.div>

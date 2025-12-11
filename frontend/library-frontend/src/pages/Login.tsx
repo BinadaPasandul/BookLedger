@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, ArrowRight, BookOpen, Eye, EyeOff, LogIn } from "lucide-react";
+import { User, Lock, ArrowRight, BookOpen, Eye, EyeOff } from "lucide-react";
 
 function Login({ onLogin }: { onLogin: (user: string) => void }) {
   const [username, setUsername] = useState("");
@@ -21,13 +21,15 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
       .post("http://localhost:5156/api/Auth/login", { username, password })
       .then((res) => {
         localStorage.setItem("token", res.data.token);
-        localStorage.setItem("username", res.data.username);
-        onLogin(res.data.username);
-        setTimeout(() => navigate("/"), 800);
+        localStorage.setItem("username", username);
+
+        onLogin(username); // update parent state
+
+        navigate("/books"); // 🔥 redirect to catalog immediately
       })
       .catch((err) => {
-        const errorMessage = err.response?.data?.message || "Invalid username or password";
-        setLoginError(errorMessage);
+        const message = err.response?.data?.message || "Invalid username or password";
+        setLoginError(message);
         setTimeout(() => setLoginError(null), 3000);
       })
       .finally(() => setIsLoading(false));
@@ -35,27 +37,6 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-100 flex items-center justify-center p-4">
-      
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.15 }}
-          className="absolute top-0 right-0 w-64 h-64 bg-emerald-400 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.1 }}
-          transition={{ delay: 0.2 }}
-          className="absolute bottom-0 left-0 w-80 h-80 bg-teal-400 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.08 }}
-          transition={{ delay: 0.4 }}
-          className="absolute top-1/2 left-1/3 w-48 h-48 bg-slate-400 rounded-full blur-3xl"
-        />
-      </div>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -65,13 +46,11 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
       >
         {/* Card */}
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          
+
           {/* Header with Gradient */}
           <div className="bg-gradient-to-br from-emerald-900 to-teal-900 p-8 text-center relative overflow-hidden">
-            {/* Animated Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400"></div>
-            
-            {/* Icon */}
+
             <motion.div
               initial={{ rotate: -180, opacity: 0 }}
               animate={{ rotate: 0, opacity: 1 }}
@@ -80,21 +59,16 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
             >
               <BookOpen className="w-8 h-8 text-white" />
             </motion.div>
-            
-            {/* Title */}
+
             <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
             <p className="text-emerald-200/80">Sign in to continue to BookLedger</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleLogin} className="p-8 space-y-6">
-            
+
             {/* Username Input */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
               <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Username
@@ -106,7 +80,9 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 shadow-sm hover:border-emerald-300 transition-all disabled:bg-slate-50"
+                  className="w-full px-4 pl-12 py-3.5 bg-white border border-slate-200 rounded-xl
+                  focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400
+                  shadow-sm hover:border-emerald-300 transition-all disabled:bg-slate-50"
                   disabled={isLoading}
                 />
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -114,11 +90,7 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
             </motion.div>
 
             {/* Password Input */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                 <Lock className="w-4 h-4" />
                 Password
@@ -130,7 +102,9 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 shadow-sm hover:border-emerald-300 transition-all disabled:bg-slate-50"
+                  className="w-full px-4 pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl 
+                  focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 
+                  shadow-sm hover:border-emerald-300 transition-all disabled:bg-slate-50"
                   disabled={isLoading}
                 />
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -150,7 +124,7 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
               {loginError && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="p-3 bg-red-50 border border-red-200 rounded-xl"
                 >
@@ -159,16 +133,14 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
               )}
             </AnimatePresence>
 
-            {/* Enhanced Login Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+            {/* Login Button */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 rounded-xl font-semibold overflow-hidden group shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 
+                rounded-xl font-semibold overflow-hidden group shadow-lg hover:shadow-xl transition-all 
+                duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {isLoading ? (
@@ -183,53 +155,23 @@ function Login({ onLogin }: { onLogin: (user: string) => void }) {
                     </>
                   )}
                 </span>
-                {/* Sliding background effect */}
                 <span className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-teal-700 translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
-                {/* Shine effect */}
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
               </button>
             </motion.div>
 
             {/* Register Link */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-center pt-4 border-t border-slate-100"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-center pt-4 border-t border-slate-100">
               <p className="text-slate-600 text-sm">
                 Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="text-emerald-600 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 group"
-                >
+                <Link to="/register" className="text-emerald-600 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 group">
                   Create Account
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </p>
-              
-              {/* Demo Account Hint */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="mt-4 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg"
-              >
-                
-              </motion.p>
             </motion.div>
           </form>
         </div>
-
-        {/* Footer Note */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 0.6, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-6"
-        >
-
-        </motion.div>
       </motion.div>
     </div>
   );

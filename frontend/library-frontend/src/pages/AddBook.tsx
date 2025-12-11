@@ -25,12 +25,18 @@ function AddBook() {
     e.preventDefault();
     const newBook = { title, author, description, category };
 
-    api.post("/Books", newBook)
+    const token = localStorage.getItem("token");
+
+    api.post("/Books", newBook, {
+      headers: {
+        Authorization: `Bearer ${token}`,  // 🔥 FIX: SEND TOKEN
+      },
+    })
       .then(() => {
         alert("Book added successfully!");
-        navigate("/");
+        navigate("/books"); // 🔥 FIX: redirect to book catalog
       })
-      .catch(() => alert("Failed to add book. (Check login status)"));
+      .catch(() => alert("Failed to add book. Please login again!"));
   };
 
   return (

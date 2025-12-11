@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import BookList from "./pages/BookList";
@@ -41,7 +41,7 @@ function App() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
 
           {/* ---- Logo + Title ---- */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to={loggedIn ? "/books" : "/login"} className="flex items-center gap-3 group">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">
                 Book Ledger
@@ -56,18 +56,20 @@ function App() {
           <div className="flex items-center gap-8">
 
             {/* Book Catalog Link */}
-            <Link
-              to="/"
-              className="text-slate-200 hover:text-white font-medium transition-colors duration-300 relative group"
-            >
-              <span className="flex items-center gap-2">Book Catalog</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-
-            {/* 🌿 Add Book (Minimal underline style) */}
             {loggedIn && (
               <Link
-                to="/add"
+                to="/books"
+                className="text-slate-200 hover:text-white font-medium transition-colors duration-300 relative group"
+              >
+                <span className="flex items-center gap-2">Book Catalog</span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-full transition-all duration-300"></span>
+              </Link>
+            )}
+
+            {/* 🌿 Add Book */}
+            {loggedIn && (
+              <Link
+                to="/add-book"
                 className="text-slate-200 hover:text-white font-medium transition-colors duration-300 relative group"
               >
                 <span className="flex items-center gap-2">Add New Book</span>
@@ -133,11 +135,26 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-6 md:p-8">
         <div className="max-w-7xl mx-auto">
           <Routes>
-            <Route path="/" element={<BookList />} />
-            <Route path="/add" element={<AddBook />} />
-            <Route path="/edit/:id" element={<EditBook />} />
+
+            {/* ⬇ Redirect / to /login */}
+            <Route path="/" element={<Navigate to="/login" />} />
+
+            {/* Public Routes */}
             <Route path="/login" element={<Login onLogin={(u) => { setLoggedIn(true); setUsername(u); }} />} />
             <Route path="/register" element={<Register />} />
+
+            {/* Protected Routes */}
+            {loggedIn ? (
+              <>
+                <Route path="/books" element={<BookList />} />
+                <Route path="/add-book" element={<AddBook />} />
+                <Route path="/edit/:id" element={<EditBook />} />
+              </>
+            ) : (
+              // Redirect blocked URLs to login
+              <Route path="*" element={<Navigate to="/login" />} />
+            )}
+
           </Routes>
         </div>
       </div>
